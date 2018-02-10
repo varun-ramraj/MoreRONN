@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<title>MoreRONN Disorder Prediction Server</title>
+
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css">
+<link rel="stylesheet" href="html/css/bootstrap.min.css" />
+<link rel="stylesheet" href="html/css/bootstrap-theme.min.css" />
+<link rel="stylesheet" href="html/css/angular-chart.min.css" />
+<link rel="stylesheet" href="html/css/angular-ui-notification.min.css" />
+<link rel="stylesheet" href="html/css/style.css" />
+
+
+<script src="html/js/jquery-2.2.1.min.js"></script>
+<script src="html/js/bootstrap.min.js"></script>
+<script src="html/js/angular.min.js"></script>
+<script src="html/js/ui-bootstrap-tpls-1.2.1.min.js"></script>
+<script src="html/js/Chart.min.js"></script>
+<script src="html/js/angular-chart.min.js"></script>
+<script src="html/js/angular-ui-notification.min.js"></script>
+<script src="html/js/FileSaver.min.js"></script>
+
+<script src="html/js/moreronn_config.js"></script>
+<script src="html/js/moreronn.js"></script>
+</head>
+
+<body ng-app="moreronnApp" ng-controller="moreronnController">
+
+<div class="container-fluid">
+	<div class="row">
+		<div class="col-md-12">
+			<div class="jumbotron">
+				<div class="row">
+					<div class="col-md-1"><h2><img src="html/images/strubi.png"></img></h2></div>
+					<div class="col-md-10"><h2>
+					    MoreRONN Disorder Prediction Server
+					</h2>
+					<p>
+						Powered by <strong>MoreRONN</strong>
+								<span data-ng-show="isGettingVersion"><i class="fa fa-spinner fa-spin"></i></span>
+								<span data-ng-hide="isGettingVersion"><strong><em> v{{moreronnVersion}}</em></strong></span>
+								&nbsp;&nbsp;
+								<span class="label label-success" data-ng-show="serverOnline">Server Online</span>
+								<span class="label label-danger" data-ng-hide="serverOnline">Server Offline</span>
+					</p>
+					</div>
+					<div class="col-md-1"><h2><img src="html/images/oxlogo.gif"></img></h2></div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="row">
+		<div class="col-md-12">
+			<p>
+			    MoreRONN is the spiritual successor of <a href="https://www.strubi.ox.ac.uk/RONN" target="_blank">RONN</a> and is useful for surveying disorder in proteins as well as designing expressible constructs for X-ray crystallography. This web server only accepts <strong>3500</strong> amino acids at a time. If you have any questions, or would like to obtain a standalone version without prediction limits, please <script>document.write('<'+'a'+' '+'h'+'r'+'e'+'f'+'='+"'"+'m'+'&'+'#'+'9'+'7'+';'+'&'+'#'+'1'+'0'+'5'+';'+'&'+'#'+'1'+'0'+
+'8'+';'+'t'+'o'+'&'+'#'+'5'+'8'+';'+'&'+'#'+'1'+'1'+'4'+';'+'%'+'6'+'&'+'#'+'7'+'0'+';'+'&'+'#'+'1'+
+'1'+'0'+';'+'n'+'&'+'#'+'6'+'4'+';'+'s'+'t'+'r'+'%'+'7'+'&'+'#'+'5'+'3'+';'+'&'+'#'+'3'+'7'+';'+'&'+
+'#'+'5'+'4'+';'+'2'+'i'+'&'+'#'+'4'+'6'+';'+'&'+'#'+'1'+'1'+'1'+';'+'x'+'&'+'#'+'4'+'6'+';'+'a'+'%'+
+'6'+'3'+'%'+'&'+'#'+'5'+'0'+';'+'&'+'#'+'6'+'9'+';'+'&'+'#'+'1'+'1'+'7'+';'+'k'+"'"+'>'+'email us'+'<'+'/'+'a'+'>');</script>
+<noscript>[Turn on JavaScript to see the email address]</noscript>.
+
+			<!-- Lorem ipsum dolor sit amet, <strong>consectetur adipiscing elit</strong>. Aliquam eget sapien sapien. Curabitur in metus urna. In hac habitasse platea dictumst. Phasellus eu sem sapien, sed vestibulum velit. Nam purus nibh, lacinia non faucibus et, pharetra in dolor. Sed iaculis posuere diam ut cursus. <em>Morbi commodo sodales nisi id sodales. Proin consectetur, nisi id commodo imperdiet, metus nunc consequat lectus, id bibendum diam velit et dui.</em> Proin massa magna, vulputate nec bibendum nec, posuere nec lacus. <small>Aliquam mi erat, aliquam vel luctus eu, pharetra quis elit. Nulla euismod ultrices massa, et feugiat ipsum consequat eu.</small> -->
+		</p>
+		<p class="text-muted"><em>Predictor and web service built by Varun Ramraj. Publication currently in preparation.</em></p>
+		<hr />
+			<div class="row">
+				<div class="col-md-8">
+					<form role="form" id="submitFasta" ng-submit="submitSequences()">
+						<div class="form-group">
+
+							<label for="fastaSequences">
+								Please paste your FASTA-formatted protein sequences in the box below.
+							</label>
+							<textarea class="form-control" rows="20" id="fastaSequences" ng-model="formData.fastaSequences" required></textarea>
+						</div>
+						<button type="submit" class="btn btn-success" ng-disabled="isSubmittingFasta">
+							<span data-ng-show="isSubmittingFasta">Analysing Disorder...&nbsp;&nbsp;<i class="fa fa-spinner fa-spin"></i></span>
+							<span data-ng-hide="isSubmittingFasta">Submit Sequences</span>
+
+						</button>
+						<button type="reset" class="btn btn-warning">
+							Reset Text Box
+						</button>
+
+					</form>
+				</div>
+				<div class="col-md-4">
+					<h2>
+						How does <em>MoreRONN</em> work?
+					</h2>
+					<p>
+					    At the heart of the MoreRONN predictor is a neural network called the <strong>Bio-Basis Function Neural Network (BBFNN)</strong> (Thompson and Esnouf, 2004), also the basis of the precursor <strong>RONN</strong> predictor (Yang <em>et al.</em>, 2005). MoreRONN is different in that its input library of known disordered sequences was first clustered on the basis of weak sequence similarities. MoreRONN was then trained on this pre-clustered database using the same ten-fold cross-validation approach used in RONN. The input sequence is compared against the resulting clustered database. Rather than comparing full sequences, MoreRONN uses a "sliding window" approach of comparing overlapping 15-residue windows.
+							<br /><br />
+							MoreRONN's only "knowledge" is the set of curated prototype disordered sequences. It does not rely on any other information (amino-acid propensities, secondary structure predictions, charge-hydropathy <em>etc.</em>), making it a fast and consistent predictor. On a modern processor, MoreRONN analyses approximately 150 residues per second.
+					</p>
+					<h2>
+						Why "MoreRONN"?!
+					</h2>
+					<p>
+						Just for a little fun. The predictor is similar to RONN but has "more" to it.
+					</p>
+					<h2>
+						Privacy and Usage Terms
+					</h2>
+					<p>
+						Your query sequences, and MoreRONN's corresponding output, are <strong>not</strong> stored anywhere on our servers. All communication is SSL-encrypted.
+					</p>
+
+				</div>
+			</div>
+			<hr />
+			<div ng-if="message == 'OK'">
+				<h1>Results</h1>
+				<p>Your predictions will appear below. Click "View Graph" to generate a line graph of your prediction (<strong>note that the graph may take a few seconds to render for long sequences</strong>). Disordered residues have scores >= 0.5. Right-click on the graph to save the image. Click "Download raw data" to download the raw MoreRONN prediction in plain-text format.
+				</p>
+				<p>
+					Each result is displayed in a format that makes it easier to identify potential constructs. Per-residue scores < 0.4 are denoted as blank spaces, scores >= 0.4 and < 0.5 are shown as '-', scores >= 0.5 and < 0.6 are identified as '=', and scores >= 0.6 are denoted by '#'. Residues predictions for disorder (i.e. scores >= 0.5) are coloured in red. Hovering over a blue residue in the sequence shows the raw score for that residue.
+				</p>
+				<hr />
+			</div>
+			<div ng-repeat="(myk, myv) in predictions">
+				<h2>{{ myk }}</h2>
+				<span data-ng-show="isRenderingChart"><font class="text-muted">Loading graph...</font>&nbsp;<i class="fa fa-spinner fa-spin"></i></span>
+				<span data-ng-hide="isRenderingChart"><a ng-click="renderChart(myk)">View graph</a></span>
+				&nbsp;&nbsp;&nbsp;
+				<a ng-click="downloadRawData(myk)">Download raw data</a>
+				<h4 style="font-family: monospace;">
+					<p ng-bind-html="rawsequences[myk].join('') | format_headers: myv: rawscores[myk]"></p>
+					 <!-- <p>{{ rawscores[myk] }}</p> -->
+
+					<hr />
+				</h4>
+			</div>
+
+			<div>
+				<canvas class="chart chart-line" chart-data="chartdata" chart-labels="chartlabels"
+					chart-legend="false" chart-series="chartseries"
+					chart-options="chartoptions" chart-colours="chartcolours"> <!-- chart-click="chartClick" -->
+				</canvas>
+			</div>
+			<a name="disorderChart" id="disorderChart"></a>
+		</div>
+	</div>
+</div>
+
+</body>
+</html>
