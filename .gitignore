@@ -2,6 +2,7 @@
 *.d
 Makefile
 Makefile.in
+*m4*
 
 # Compiled Object files
 *.slo
@@ -34,3 +35,15 @@ Makefile.in
 *.app
 web/bin/moreRONN
 web/bin/*.dat
+
+# Other files
+compile
+config.guess
+config.h.in
+config.sub
+configure
+depcomp
+install-sh
+ltmain.sh
+missing
+
