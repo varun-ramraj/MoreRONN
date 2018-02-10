@@ -1,5 +1,7 @@
 # Prerequisites
 *.d
+Makefile
+Makefile.in
 
 # Compiled Object files
 *.slo
@@ -30,3 +32,5 @@
 *.exe
 *.out
 *.app
+web/bin/moreRONN
+web/bin/*.dat
