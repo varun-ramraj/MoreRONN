@@ -1,6 +1,6 @@
 /*=========================================================
  **
- ** This program is designed for running MoreRONNv4.5 for
+ ** This program is designed for running MoreRONNv4.9 for
  ** detecting disordered residues in proteins.
  ** Date:	March 2012
  ** Designer: Varun Ramraj (University of Oxford)
@@ -13,7 +13,7 @@
 
 #include <unistd.h>
 #include "mclBBF.h"
-#define MORERONN_VERSION 4.8
+#define MORERONN_VERSION 4.9
 
 using namespace std;
     
