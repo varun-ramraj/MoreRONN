@@ -43,7 +43,7 @@ int load_moreronn_data(string datafile, string mString);
 vector<double> new_detect(string curquery);
 
 //takes as many strings as required
-int callBBF_driver(vector<string> qry, vector<string> hdrs, string mod_fn, string pdf_fn1, double d_weight, string newdatafile);
+int callBBF_driver(vector<string> qry, vector<string> hdrs, string mod_fn, string pdf_fn1, double d_weight, string newdatafile, int printVerbosePredictionHeader = 1);
 
 double weight(int win, int res);
 
@@ -56,6 +56,6 @@ int printProgBar(int percent);
 
 static string master_prob_output = "disorder.prb";
 
-int write_output(string curquery, string header, vector<double> scores);
+int write_output(string curquery, string header, vector<double> scores, int printVerbosePredictionHeader = 1);
 
 #endif

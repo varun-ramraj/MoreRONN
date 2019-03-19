@@ -100,10 +100,11 @@ int main(int argc, char *argv[])
     ifstream ifile;
     string testoutputstring;
 
+    int printVerbosePredictionHeader = 1;
     //argument check
     int opt;
 
-    while ((opt = getopt(argc, argv, "sf:w:d:")) != -1)
+    while ((opt = getopt(argc, argv, "sp:f:w:d:")) != -1)
     {
 	switch (opt)
 	{
@@ -125,6 +126,10 @@ int main(int argc, char *argv[])
 		dbPathChanged = true;
 		break;
 
+	    case 'p': //include prediction header if value is 1 (default)
+		printVerbosePredictionHeader = atoi(optarg);
+		break;
+
 	    default: //display help and usage
 		is_stdin = -1;
 		break;
@@ -135,7 +140,7 @@ int main(int argc, char *argv[])
     if (is_stdin == -1)
     {
 	fprintf(stderr, "MoreRONN Disorder Predictor version: %.1f\n", MORERONN_VERSION); 
-	fprintf(stderr, "Usage: %s [-f = filename -- FASTA-format OR -s = Standard Input] [-w = disorder_weight (optional) = default 0.5] [-d = database file]\n", argv[0]); 
+	fprintf(stderr, "Usage: %s [-f = filename -- FASTA-format OR -s = Standard Input] [-w = disorder_weight (optional) = default 0.5] [-d = database file] [-p0/-p1 = omit/include symbolic prediction header (default is to include)]\n", argv[0]); 
 	exit(EXIT_FAILURE);
     }
 
@@ -268,7 +273,7 @@ int main(int argc, char *argv[])
 
 
     //run 10-fold prediction and combine results
-    callBBF_driver(queries, headers, fModel, fPDF, disorder_weight, fNewData);
+    callBBF_driver(queries, headers, fModel, fPDF, disorder_weight, fNewData, printVerbosePredictionHeader);
 
 
     return 0;

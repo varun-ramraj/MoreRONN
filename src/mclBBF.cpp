@@ -575,7 +575,7 @@ vector<double> new_detect(string curquery)
 }
 
 //write to stdout by default
-int write_output(string curquery, string header, vector<double> scores)
+int write_output(string curquery, string header, vector<double> scores, int printVerbosePredictionHeader)
 {
 
     int qlen = curquery.length();
@@ -587,53 +587,58 @@ int write_output(string curquery, string header, vector<double> scores)
     //allows multiple sequences and scores to be written
     //fp=fopen(master_prob_output.c_str(),"a");
 
-    //write out the header
+    //write out the header 
     fprintf(stdout, ">%s\n", header.c_str());
     fflush(stdout);
+    
 
-    //write out metrics
+    //write out metrics if desired
 
-    int npl = 70; //number of residues per line
-    int nr = 0;
-    string pred = "";
-    for (int i = 0; i < qlen; i++)
-    {
-	//bug fix: if it's not a number, it's likely due to the sequence being shorter
-	//than window length, and it should be annotated differently!
-	if (isnan(scores[i])) { pred += "?"; }
-	else if (scores[i] > 0.6) { pred += "#"; }
-	else if (scores[i] > 0.5) { pred += "="; }
-	else if (scores[i] > 0.4) { pred += "-"; }
-	else { pred += " "; }
-    }
+    if (printVerbosePredictionHeader == 1) {
 
-    string lineout = ">";
-    string scoreout = ">";
-    for (int j = 0; j < qlen; j++)
-    {
-	lineout += curquery[j];
-	scoreout += pred[j];
-	nr++;
+	int npl = 70; //number of residues per line
+	int nr = 0;
+	string pred = "";
+	for (int i = 0; i < qlen; i++)
+	{
+	    //bug fix: if it's not a number, it's likely due to the sequence being shorter
+	    //than window length, and it should be annotated differently!
+	    if (isnan(scores[i])) { pred += "?"; }
+	    else if (scores[i] > 0.6) { pred += "#"; }
+	    else if (scores[i] > 0.5) { pred += "="; }
+	    else if (scores[i] > 0.4) { pred += "-"; }
+	    else { pred += " "; }
+	}
 
-	if (nr == npl)
+	string lineout = ">";
+	string scoreout = ">";
+	for (int j = 0; j < qlen; j++)
+	{
+	    lineout += curquery[j];
+	    scoreout += pred[j];
+	    nr++;
+
+	    if (nr == npl)
+	    {
+		fprintf(stdout, "%s\n", lineout.c_str());
+		fprintf(stdout, "%s\n", scoreout.c_str());
+		fprintf(stdout, ">$\n"); //spacer
+		fflush(stdout);
+
+		lineout = ">";
+		scoreout = ">";
+		nr = 0;
+	    }
+	}
+	//last bits, should definitely be less than npl
+	if (nr != 0)
 	{
 	    fprintf(stdout, "%s\n", lineout.c_str());
 	    fprintf(stdout, "%s\n", scoreout.c_str());
 	    fprintf(stdout, ">$\n"); //spacer
 	    fflush(stdout);
-
-	    lineout = ">";
-	    scoreout = ">";
-	    nr = 0;
 	}
-    }
-    //last bits, should definitely be less than npl
-    if (nr != 0)
-    {
-	fprintf(stdout, "%s\n", lineout.c_str());
-	fprintf(stdout, "%s\n", scoreout.c_str());
-	fprintf(stdout, ">$\n"); //spacer
-	fflush(stdout);
+
     }
 
     //now write per-residue scores
@@ -675,7 +680,7 @@ unsigned int split(string &txt, vector<string> &strs, string ch)
 }
 
 
-int callBBF_driver(vector<string> qry, vector<string> hdrs, string mod_fn, string pdf_fn1, double d_weight, string newdatafile)
+int callBBF_driver(vector<string> qry, vector<string> hdrs, string mod_fn, string pdf_fn1, double d_weight, string newdatafile, int printVerbosePredictionHeader)
 {
 
     //store variables and load data
@@ -699,7 +704,7 @@ int callBBF_driver(vector<string> qry, vector<string> hdrs, string mod_fn, strin
 	vector<double> curscores = new_detect(query.at(i));
 
 	//write prediction to file
-	write_output(query.at(i), headers.at(i), curscores);
+	write_output(query.at(i), headers.at(i), curscores, printVerbosePredictionHeader);
     }
 
     return 0;
