@@ -11,12 +11,12 @@ invalid_aa = ['B', 'Z', 'J', 'O', 'U', 'X']
 res_limit = 3500 #don't exceed this!
 
 STATIC_URL_PREFIX = '/html/'
-STATIC_FILE_DIR = 'html/'
+STATIC_FILE_DIR = 'public/html/'
 
 PREDICT_PREFIX = '/predict'
 
 SCRIPTDIR = os.path.dirname(os.path.abspath(__file__))
-print SCRIPTDIR
+#print(SCRIPTDIR)
 
 MORERONN_BIN_DIR = os.path.join(SCRIPTDIR, 'bin')
 
@@ -224,7 +224,7 @@ def application(environ, start_response):
         return moreronn_middleware(environ, start_response)
 
     start_response('200 OK', [('Content-Type', 'text/html')])
-    cont = open(os.path.join(SCRIPTDIR, os.path.join('html','index.html')), 'r').read()
+    cont = open(os.path.join(SCRIPTDIR, os.path.join(STATIC_FILE_DIR,'index.html')), 'r').read()
     return cont
 
 if __name__ == "__main__":
