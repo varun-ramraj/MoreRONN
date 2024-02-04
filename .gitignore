@@ -9,7 +9,7 @@ Makefile.in
 *.lo
 *.o
 *.obj
-
+*.*~
 # Precompiled Headers
 *.gch
 *.pch

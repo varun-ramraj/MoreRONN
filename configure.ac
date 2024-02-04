@@ -1,10 +1,10 @@
-AC_INIT([MoreRONN], [4.9], [varun@strubi.ox.ac.uk])
+AC_INIT([MoreRONN],[4.9],[varun@strubi.ox.ac.uk])
 
 AC_CONFIG_HEADERS([config.h])
 
 AM_INIT_AUTOMAKE([-Wall -Werror foreign])
 
-AC_PROG_LIBTOOL
+LT_INIT
 
 AC_PREFIX_DEFAULT(/usr/local/MoreRONN)
 

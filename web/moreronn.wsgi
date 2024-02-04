@@ -1,4 +1,5 @@
-from cgi import parse_qs, escape
+from html import escape
+from urllib.parse import parse_qs
 import json
 import sys
 import subprocess
@@ -6,6 +7,8 @@ import time
 import os
 import logging
 from collections import OrderedDict
+
+logging.basicConfig(level=logging.DEBUG)
 
 invalid_aa = ['B', 'Z', 'J', 'O', 'U', 'X']
 res_limit = 3500 #don't exceed this!
@@ -16,11 +19,11 @@ STATIC_FILE_DIR = 'html/'
 PREDICT_PREFIX = '/predict'
 
 SCRIPTDIR = os.path.dirname(os.path.abspath(__file__))
-print SCRIPTDIR
+logging.debug("Script running in: " + SCRIPTDIR)
 
 MORERONN_BIN_DIR = os.path.join(SCRIPTDIR, 'bin')
 
-MIME_TABLE = {'.txt': 'text/plain',
+MIME_TABLE = {'.txt': b'text/plain',
       '.html': 'text/html',
       '.css': 'text/css',
       '.js': 'application/javascript',
@@ -35,11 +38,12 @@ def validate_input(inputseqs):
     curheaders = []
     num_aa = 0
 
-    for line in inputseqs.split('\n'):
+    inputseqs = inputseqs.decode()
+    for line in inputseqs.strip().split('\n'):
         if len(line) > 0:
             if line.startswith('>'):
                 if line not in curheaders:
-                    curheaders.append(line)
+                    curheaders.append(line.encode())
 
                 else:
                     return 1 #duplicate header
@@ -74,6 +78,7 @@ def content_type(path):
 def static_middleware(environ, start_response):
 
     path = SCRIPTDIR + environ['PATH_INFO']
+    #logging.debug('Entering static middleware. Path: %s' % path)
 
     if (environ['PATH_INFO'].startswith(STATIC_URL_PREFIX) or
         environ['PATH_INFO'].startswith(STATIC_FILE_DIR)) and os.path.exists(path):
@@ -105,31 +110,33 @@ def moreronn_middleware(environ, start_response):
     request_body = environ['wsgi.input'].read(request_body_size)
 
     parameters = parse_qs(request_body)
+    logging.debug(":::PARAMETERS RECEIVED:::")
+    logging.debug(parameters)
 
-    if 'MoreRONNVersion' in parameters:
+    if b'MoreRONNVersion' in parameters:
         #wait for a bit, for added UI effect
         #this sleep() does nothing else but make the page look good...
         time.sleep(1)
-
+        logging.debug("Trying to poll MoreRONN binary from %s" % MORERONN_BIN_DIR)
         mrn_proc = subprocess.Popen([os.path.join(MORERONN_BIN_DIR, 'moreRONN')], stderr = subprocess.PIPE)
 
-        mrn_out = mrn_proc.communicate()[1]
+        mrn_out = mrn_proc.communicate()[1].decode()
 
         for line in mrn_out.split('\n'):
             if 'version' in line:
                 returnvalues['version'] = line[line.find(':')+1:].strip()
+                logging.debug("MORERONN VERSION: %s" % returnvalues['version'])
                 start_response('200 OK', responseheaders)
-                return json.dumps(returnvalues)
+                return [json.dumps(returnvalues).encode()]
 
+    fastaSequences = None
+    if b'fastaSequences' in parameters.keys():
+        fastaSequences = parameters[b'fastaSequences'][0]
 
-    if 'fastaSequences' in parameters:
-        fastaSequences = parameters['fastaSequences'][0]
-    else:
-        fastaSequences = ''
-
-    if len(fastaSequences) > 0:
+    if fastaSequences is not None:
         #validate headers
         isInputValid = validate_input(inputseqs = fastaSequences)
+        logging.debug("IS INPUT VALID: %d" % isInputValid)
 
         if isInputValid != 0:
             if isInputValid == 1:
@@ -146,15 +153,14 @@ def moreronn_middleware(environ, start_response):
 
             #send the error response back right away
             start_response('200 OK', responseheaders)
-
-            return json.dumps(returnvalues)
+            return [json.dumps(returnvalues).encode()]
 
         #if we made it this far, we are probably okay to run MoreRONN
 
         #call moreRONN, redirect stderr to stdout to capture everything
         mrn_proc = subprocess.Popen([os.path.join(MORERONN_BIN_DIR, 'moreRONN'), '-s' , '-d', os.path.join(MORERONN_BIN_DIR, 'moreronn_master_data.dat')], stdin = subprocess.PIPE, stdout = subprocess.PIPE)
 
-        mrn_out = mrn_proc.communicate(input = fastaSequences)[0]
+        mrn_out = mrn_proc.communicate(input = fastaSequences)[0].decode()
 
         #parse the output nicely
         #MoreRONN gives us a nice output for its headers, but we will reconstruct
@@ -167,10 +173,9 @@ def moreronn_middleware(environ, start_response):
         raw_full_output = {}
 
         curseq = ''
-        for line in mrn_out.split('\n'):
+        for line in mrn_out.strip().split('\n'):
             if len(line) > 0:
                 if line.startswith('(Sequence '): #get the sequence name out
-
                     curseq = line[line.find(':')+1:].strip()
                     predictions[curseq] = ''
                     rawsequences[curseq] = []
@@ -178,7 +183,6 @@ def moreronn_middleware(environ, start_response):
                     raw_full_output[curseq] = ''
 
                 elif line.startswith('>') == False:
-
                     tkns = line.strip().split('\t')
                     if len(tkns) == 2:
                         rawsequences[curseq].append(tkns[0])
@@ -201,8 +205,8 @@ def moreronn_middleware(environ, start_response):
                 raw_full_output[curseq] += line.strip() + "\n"
 
 
-        returnvalues['fastaSequences'] = fastaSequences
-        returnvalues['message'] = "OK"
+        returnvalues['fastaSequences'] = fastaSequences.decode()
+        returnvalues['message'] = 'OK'
         returnvalues['predictions'] = predictions
         returnvalues['rawscores'] = rawscores
         returnvalues['rawsequences'] = rawsequences
@@ -210,11 +214,11 @@ def moreronn_middleware(environ, start_response):
 
         start_response('200 OK', responseheaders)
 
-        return json.dumps(returnvalues)
+        return [json.dumps(returnvalues).encode()]
 
     else:
         start_response('200 OK', [('Content-Type', 'text/html')])
-        return "<html></html>"
+        return [b"<html></html>"]
 
 #global application
 def application(environ, start_response):
@@ -224,8 +228,11 @@ def application(environ, start_response):
         return moreronn_middleware(environ, start_response)
 
     start_response('200 OK', [('Content-Type', 'text/html')])
-    cont = open(os.path.join(SCRIPTDIR, os.path.join('html','index.html')), 'r').read()
-    return cont
+    indexfile = os.path.join(SCRIPTDIR, os.path.join('html','index.html'))
+    logging.debug('Returning basic app stuff from %s' % indexfile)
+
+    cont = open(indexfile, 'rb').read()
+    return [cont]
 
 if __name__ == "__main__":
     from wsgiref.simple_server import make_server
