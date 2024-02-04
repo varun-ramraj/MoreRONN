@@ -1,0 +1,8 @@
+version: "3.9"
+services:
+  moreronn_web:
+    build: .
+      #ports:
+      #- "9090:9090"
+    command: "python web/moreronn.wsgi" 
+    network_mode: "host"
