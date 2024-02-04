@@ -4,3 +4,5 @@ To compile and run:
 2) ./configure
 3) make
 4) make install (as root)
+
+The `moreronn.wsgi` web application has been updated to work with Python 3.
