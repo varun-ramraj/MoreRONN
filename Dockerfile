@@ -15,3 +15,5 @@ COPY . .
 # Compile MoreRONN
 # and copy-symlink it
 RUN apt-get update && apt-get -y install build-essential libtool autoconf automake && ./bootstrap.sh && ./configure && make && make install && cp /usr/local/bin/moreRONN_49 web/bin/moreRONN && cp /moreronn_app/data/*.dat web/bin/
+
+RUN pip install uwsgi uwsgitop
